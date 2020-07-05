@@ -14,25 +14,33 @@ const io = socketio(server);
 
 io.on("connect", (socket) => {
   console.log("We have a new connection!!!");
-  // --------join--------
-  // 從client端取得name和room後
+
+  /*
+  --------join--------
+  從client端取得name和room後
+  向client端發送請求：「發布訊息」--歡迎登入
+  向其他使用者client端發送請求：「發布訊息」--有新人加入
+  */
   socket.on("join", ({ name, room }, callback) => {
-    // 1藉由addUser將他們整理成一個user物件 並將socket.id作為id
+    // 1-1 藉由addUser將他們整理成一個user物件 並將socket.id作為id
     const { error, user } = addUser({ id: socket.id, name, room });
 
-    // 2如果有問題（有重複使用者）藉由client的callback來顯示error
+    // 1-2 如果有問題（有重複使用者）藉由client的callback來顯示error
     if (error) return callback(error);
 
-    // 3向client端發送發文請求 夾帶user相關信息message
+    // 1-3 向client端發送請求：發文，夾帶的message包含user跟text
     socket.emit("message", {
       user: "admin",
       text: `${user.name} welcome to the room ${user.room}.`,
     });
-    // broadcast對所有「特定房間」的使用者傳送訊息
+
+    // --------broadcast--------
+    // 對該特定房間的其他使用者client端發送請求：發文「有新人加入」
     socket.broadcast
-      .to(user.room) //特定房間
+      .to(user.room) //該特定房間
       .emit("message", { user: "admin", text: `${user.name} has joined!` });
 
+    // 尚未用到
     socket.join(user.room);
     io.to(user.room).emit("roomData", {
       room: user.room,
@@ -41,13 +49,20 @@ io.on("connect", (socket) => {
 
     callback();
   });
-  // --------sendMessage--------
-  // 使用者輸入訊息後 夾帶著message對server端提出請求
+
+  /*
+  --------sendMessage--------
+  使用者輸入訊息後 夾帶著message
+  對房間內所有人server端提出請求：「發布訊息」--此人的Po文內容
+  */
   socket.on("sendMessage", (message, callback) => {
-    // 得到該使用著的資料
+    // 1-1 得到該使用著的資料
     const user = getUser(socket.id);
-    // 指定特定房間，並向client端提出夾帶user相關訊息以及message內容的發文要求
+
+    // 1-2 對房間內所有人server端提出請求：「發布訊息」--此人的Po文內容
     io.to(user.room).emit("message", { user: user.name, text: message });
+
+    // 尚未用到
     io.to(user.room).emit("roomData", {
       room: user.room,
       users: getUsersInRoom(user.room),
@@ -55,11 +70,13 @@ io.on("connect", (socket) => {
 
     callback();
   });
+
   // --------disconnect--------
   socket.on("disconnect", () => {
     console.log("User had left.");
     const user = removeUser(socket.id);
 
+    // 對房間所有人提出請求：「發布訊息」說此人已離開
     if (user) {
       io.to(user.room).emit("message", {
         user: "admin",

@@ -14,35 +14,39 @@ function Chat({ location }) {
     room: "",
   });
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([]);
+  const [messageList, setMessageList] = useState([]);
 
   const ENDPOINT = "localhost:5000";
 
+  // --------進入聊天視窗後，向server發送請求：加入--------
   useEffect(() => {
+    // 1-1 取得url中的user資訊並放到state中
     const { name, room } = querystring.parse(location.search);
     setUser({ name: name, room: room });
 
+    // 1-2 向server發送請求：加入，順帶附上name跟room
     socket = io(ENDPOINT);
-    // 向server發送請求
     socket.emit("join", { name, room }, (error) => {
       if (error) {
-        // alert(error);
+        alert(error);
       }
     });
 
+    // 1-3 離開時向server發送請求：disconnect
     return () => {
       socket.emit("disconnect");
       socket.off();
     };
   }, [ENDPOINT, location.search]);
 
+  // --------處理server傳送過來的發文要求--------
   useEffect(() => {
-    // 負責處理server傳送過來的發文要求
     socket.on("message", (message) => {
-      setMessages([...messages, message]);
+      setMessageList([...messageList, message]);
     });
-  }, [messages]);
+  }, [messageList]);
 
+  // --------Send鍵按下後，向server發送請求：Po文--------
   const sendMessage = (e) => {
     e.preventDefault();
     if (message) {
@@ -50,13 +54,11 @@ function Chat({ location }) {
     }
   };
 
-  // console.log(messages);
-
   return (
     <div className="Chat">
       <div className="ChatContainer">
         <InfoBar room={user.room} />
-        <MessagesContainer messages={messages} name={user.name} />
+        <MessagesContainer messages={messageList} name={user.name} />
         <Input
           message={message}
           setMessage={setMessage}

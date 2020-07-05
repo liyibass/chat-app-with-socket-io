@@ -9,8 +9,6 @@ function Join() {
     room: "",
   });
 
-  function inputHandler(e) {}
-
   return (
     <div className="Join">
       <div className="joinInnerContainer">
