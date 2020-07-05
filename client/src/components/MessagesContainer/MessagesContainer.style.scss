@@ -1,0 +1,10 @@
+@import "../../styles/base/variables.scss";
+@import "../../styles/base/responsiveMixin.scss";
+
+.MessagesContainer {
+  padding: 5% 0;
+  overflow: hidden;
+  flex: auto;
+  @include atSmall {
+  }
+}
