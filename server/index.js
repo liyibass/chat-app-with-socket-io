@@ -1,14 +1,14 @@
 const express = require("express");
 const socketio = require("socket.io");
 const http = require("http");
+const cors = require("cors");
 
 const { addUser, removeUser, getUser, getUsersInRoom } = require("./users.js");
 
 const PORT = process.env.PORT || 5000;
-
 const router = require("./router");
-
 const app = express();
+
 const server = http.createServer(app);
 const io = socketio(server);
 
@@ -18,11 +18,11 @@ io.on("connect", (socket) => {
   /*
   --------join--------
   從client端取得name和room後
-  向client端發送請求：「發布訊息」--歡迎登入
-  向其他使用者client端發送請求：「發布訊息」--有新人加入
+  1 向client端發送請求：「列出訊息」--歡迎登入
+  2 向其他使用者client端發送請求：「列出訊息」--有新人加入
   */
   socket.on("join", ({ name, room }, callback) => {
-    // 1-1 藉由addUser將他們整理成一個user物件 並將socket.id作為id
+    // 1-1 藉由addUser將user、room整理成一個user物件 並將socket.id作為id
     const { error, user } = addUser({ id: socket.id, name, room });
 
     // 1-2 如果有問題（有重複使用者）藉由client的callback來顯示error
@@ -35,7 +35,7 @@ io.on("connect", (socket) => {
     });
 
     // --------broadcast--------
-    // 對該特定房間的其他使用者client端發送請求：發文「有新人加入」
+    // 2-1 對該特定房間的其他使用者client端發送請求：發文「有新人加入」
     socket.broadcast
       .to(user.room) //該特定房間
       .emit("message", { user: "admin", text: `${user.name} has joined!` });
@@ -53,13 +53,13 @@ io.on("connect", (socket) => {
   /*
   --------sendMessage--------
   使用者輸入訊息後 夾帶著message
-  對房間內所有人server端提出請求：「發布訊息」--此人的Po文內容
+  對房間內所有人server端提出請求：「列出訊息」--此人的Po文內容
   */
   socket.on("sendMessage", (message, callback) => {
     // 1-1 得到該使用著的資料
     const user = getUser(socket.id);
 
-    // 1-2 對房間內所有人server端提出請求：「發布訊息」--此人的Po文內容
+    // 1-2 對房間內所有人server端提出請求：「列出訊息」--此人的Po文內容
     io.to(user.room).emit("message", { user: user.name, text: message });
 
     // 尚未用到
@@ -71,12 +71,17 @@ io.on("connect", (socket) => {
     callback();
   });
 
-  // --------disconnect--------
+  /*
+  --------disconnect--------
+  一旦接收到斷線請求
+  先利用removeUser取得該user的資料
+  再對房間所有人提出請求：「列出訊息」說那個傢伙已離開
+  */
   socket.on("disconnect", () => {
     console.log("User had left.");
     const user = removeUser(socket.id);
 
-    // 對房間所有人提出請求：「發布訊息」說此人已離開
+    // 對房間所有人提出請求：「列出訊息」說此人已離開
     if (user) {
       io.to(user.room).emit("message", {
         user: "admin",
@@ -87,6 +92,7 @@ io.on("connect", (socket) => {
 });
 
 app.use(router);
+app.use(cors());
 
 server.listen(PORT, () => {
   console.log(`Server has started on port ${PORT}`);
