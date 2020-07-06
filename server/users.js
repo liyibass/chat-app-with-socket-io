@@ -4,7 +4,7 @@ const users = [];
 const addUser = ({ id, name, room }) => {
   // 1整理string格式
   name = name.trim().toLowerCase();
-  room = room.trim().toLowerCase();
+  room = room.trim();
   // 2檢查是否有重複使用者
   const existingUser = users.find(
     (user) => user.room === room && user.name === name

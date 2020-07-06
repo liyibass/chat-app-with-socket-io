@@ -1,6 +1,10 @@
 @import "../../styles/base/variables.scss";
 @import "../../styles/base/responsiveMixin.scss";
 
+.textWhite {
+  color: white;
+}
+
 .Join {
   display: flex;
   justify-content: center;
