@@ -1,15 +1,11 @@
-import React, { useEffect } from "react";
-import { EventHandler } from "./scripts/EventHandler";
+import React from "react";
 
 import "./styles/base/overall.scss";
-import { Route, Router, Switch } from "react-router";
+import { Route, Switch } from "react-router";
 import Join from "./components/Join/Join.component";
 import Chat from "./components/Chat/Chat.component";
 
 function App() {
-  useEffect(() => {
-    let ev = new EventHandler();
-  }, []);
   return (
     <div className="App">
       <Switch>

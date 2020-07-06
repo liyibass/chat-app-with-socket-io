@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { makeStyles } from "@material-ui/core/styles";
-import InputLabel from "@material-ui/core/InputLabel";
+
 import MenuItem from "@material-ui/core/MenuItem";
-import FormHelperText from "@material-ui/core/FormHelperText";
+
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
 
@@ -30,7 +30,6 @@ function Join() {
   });
 
   const classes = useStyles();
-  const [age, setAge] = React.useState("");
 
   return (
     <div className="Join">
